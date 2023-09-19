@@ -14,6 +14,7 @@
 """ Data parser for nerfstudio datasets. """
 
 from __future__ import annotations
+import copy
 
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -73,6 +74,8 @@ class NerfstudioDataParserConfig(DataParserConfig):
     """The interval between frames to use for eval. Only used when eval_mode is eval-interval."""
     depth_unit_scale_factor: float = 1e-3
     """Scales the depth values to meters. Default value is 0.001 for a millimeter to meter conversion."""
+    transforms_dict: Optional[dict] = None
+    """Use the transforms directly provided instead of parsing it from transforms.json"""
 
 
 @dataclass
@@ -85,12 +88,20 @@ class Nerfstudio(DataParser):
     def _generate_dataparser_outputs(self, split="train"):
         assert self.config.data.exists(), f"Data directory {self.config.data} does not exist."
 
-        if self.config.data.suffix == ".json":
-            meta = load_from_json(self.config.data)
-            data_dir = self.config.data.parent
-        else:
-            meta = load_from_json(self.config.data / "transforms.json")
+        if self.config.transforms_dict is not None:
+            meta = copy.deepcopy( self.config.transforms_dict)
+            meta['train_filenames'] = [x['file_path'] for x in meta["frames"]]
+            meta['test_filenames'] = [x['file_path'] for x in meta["frames"]][:5]
+            meta['val_filenames'] = [x['file_path'] for x in meta["frames"]][-5:]
             data_dir = self.config.data
+        else:
+
+            if self.config.data.suffix == ".json":
+                meta = load_from_json(self.config.data)
+                data_dir = self.config.data.parent
+            else:
+                meta = load_from_json(self.config.data / "transforms.json")
+                data_dir = self.config.data
 
         image_filenames = []
         mask_filenames = []

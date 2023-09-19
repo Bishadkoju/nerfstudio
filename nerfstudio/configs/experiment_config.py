@@ -43,6 +43,8 @@ class ExperimentConfig(InstantiateConfig):
 
     output_dir: Path = Path("outputs")
     """relative or absolute output directory to save all checkpoints and logging"""
+    subdir_save: bool = True
+    """Save files in output_dir/scene/model/timestamp """
     method_name: Optional[str] = None
     """Method name. Required to set in python or via cli"""
     experiment_name: Optional[str] = None
@@ -115,7 +117,10 @@ class ExperimentConfig(InstantiateConfig):
         # check the experiment and method names
         assert self.method_name is not None, "Please set method name in config or via the cli"
         self.set_experiment_name()
-        return Path(f"{self.output_dir}/{self.experiment_name}/{self.method_name}/{self.timestamp}")
+        if self.subdir_save:
+            return Path(f"{self.output_dir}/{self.experiment_name}/{self.method_name}/{self.timestamp}")
+        else:
+            return Path(f"{self.output_dir}")
 
     def get_checkpoint_dir(self) -> Path:
         """Retrieve the checkpoint directory"""
