@@ -95,6 +95,7 @@ def _encode_image_base64(
                 image[..., :3],  # Strip alpha.
                 extension=".jpeg",
                 quality=75 if quality is None else quality,
+                format=file_format
             )
         else:
             assert_never(file_format)
